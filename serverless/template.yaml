@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Timeout: 3
+    MemorySize: 128
+
+Resources:
+  DynamoDB:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: zippit
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda_handler/
+      Handler: app.lambda_handler
+      FunctionName: zippit
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Policies:
+        - DynamoDBWritePolicy: 
+            TableName: !Ref DynamoDB
+        - DynamoDBReadPolicy: 
+            TableName: !Ref DynamoDB
+      Events:
+        HealthEvent:
+          Type: Api
+          Properties:
+            Path: /health
+            Method: get
+        GenerateEvent:
+          Type: Api
+          Properties:
+            Path: /generate
+            Method: post
+        UrlEvent:
+          Type: Api
+          Properties:
+            Path: /urls/{proxy}
+            Method: get
+        HitEvent:
+          Type: Api
+          Properties:
+            Path: /hits/{proxy}
+            Method: get
